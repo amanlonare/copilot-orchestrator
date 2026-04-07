@@ -1,0 +1,76 @@
+# --- OS Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# --- IDEs and Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.history/
+
+# --- Node.js / JavaScript ---
+node_modules/
+dist/
+out/
+build/
+.next/
+.vercel/
+.turbo/
+.expo/
+.npm/
+.yarn/
+.pnpm-store/
+.eslintcache
+.stylelintcache
+node_modules.zip
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+.tox/
+.coverage
+.cache/
+.pytest_cache/
+.mypy_cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# --- Secrets and Environment Variables ---
+.env*
+!.env.example
+.secret*
+
+# --- Project Specific & Misc ---
+.snyk/
+.gemini/
+.temp/
+tmp/
+*.log
+.sh/
+.bash_history
+.zsh_history
+.aider*
+.serverless/
+
+# agents
+.agent/
+.agents/
