@@ -30,21 +30,26 @@ jobs:
         with:
           python-version-file: ".python-version"
 
-      - name: Create bump and changelog
-        uses: commitizen-tools/commitizen-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          changelog_increment_filename: CHANGELOG.md
-          push: false
-          commit: false
-
-      - name: Sync uv lockfile and Push
+      - name: Install dependencies
         run: |
-          uv lock
+          pip install commitizen
+
+      - name: Bump version and Push
+        run: |
+          # Configure Git
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
+          # Perform the Bump (updates pyproject.toml and CHANGELOG.md)
+          # We use --no-raise 21 to avoid failing if no bump is needed
+          cz bump --yes --changelog --no-raise 21
+
+          # Sync uv lock
+          uv lock
+
+          # Finalize and Push
           git add .
-          # The commitizen action already modified pyproject.toml and CHANGELOG.md
-          # uv lock modified uv.lock. We commit them all now.
-          git commit -m "bump: version update [skip ci]" || echo "No changes"
+          # Capturing version for the commit message
+          NEW_VERSION=$(cz version --project)
+          git commit -m "bump: version to $NEW_VERSION [skip ci]" || echo "No changes to commit"
           git push origin main --tags
