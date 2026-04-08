@@ -42,7 +42,7 @@ jobs:
 
           # Perform the Bump (updates pyproject.toml and CHANGELOG.md)
           # We use --no-raise 21 to avoid failing if no bump is needed
-          cz bump --yes --changelog --no-raise 21
+          cz --no-raise 21 bump --yes --changelog
 
           # Sync uv lock
           uv lock
