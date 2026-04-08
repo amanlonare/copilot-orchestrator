@@ -35,12 +35,16 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           changelog_increment_filename: CHANGELOG.md
+          push: false
+          commit: false
 
-      - name: Sync uv lockfile
+      - name: Sync uv lockfile and Push
         run: |
           uv lock
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add uv.lock
-          git commit -m "chore: sync lockfile after version bump [skip ci]" || echo "No changes to lockfile"
-          git push origin main
+          git add .
+          # The commitizen action already modified pyproject.toml and CHANGELOG.md
+          # uv lock modified uv.lock. We commit them all now.
+          git commit -m "bump: version update [skip ci]" || echo "No changes"
+          git push origin main --tags
