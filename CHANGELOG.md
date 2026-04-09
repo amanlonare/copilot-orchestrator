@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### ✨ Application Services
+- **Use Case Orchestration**: Implemented `RunOrchestratorUseCase` to coordinate the full RAG pipeline (Intake → Retrieval → Fallback → Context → Generation).
+- **Intake & Validation**: Added `QueryIntakeService` for request normalization and validation.
+- **Session Management**: Built `SessionService` to handle asynchronous conversation history loading and persistence.
+- **Retrieval Strategy**: Implemented `RetrievalStrategyService` for decoupled search mode selection (Vector, Keyword, or Hybrid).
+- **Grounded Generation**: Developed `GenerationService` for context-aware response assembly and `FallbackService` for low-confidence scenarios.
+- **Formatted Context**: Added `ContextBuilderService` to deduplicate and format retrieved snippets with source citations.
+
 ## v0.1.0 (2026-04-09)
 
 ### ✨ Domain & Contracts
