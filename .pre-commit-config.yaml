@@ -26,3 +26,8 @@ repos:
           - types-redis
           - pytest
           - pytest-asyncio
+          - fastapi
+          - langgraph
+          - openai
+          - uvicorn
+          - rich
