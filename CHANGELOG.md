@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.5.0 (2026-04-10)
+
+### ✨ Orchestration & Graph
+- **LangGraph Integration**: Established a production-ready `StateGraph` for cyclic orchestration and explicit flow control.
+- **Typed Orchestrator State**: Implemented `OrchestratorState` using Python's `TypedDict` and domain-first entities for strict contract safety.
+- **Thin Node Architecture**: Refactored orchestration logic into discrete service-delegating nodes (`intake`, `select_strategy`, `retrieve`, `assemble`, `generate`, `fallback`, `finalize`).
+- **Dynamic Routing**: Implemented conditional branching for automatic fallback to generic responses when retrieval confidence is low.
+- **Integration Testing**: Created a comprehensive test suite in `tests/integration/orchestration/` to verify end-to-end graph state transitions.
+- **Quality Gates**: Achieved 100% compliance with `ruff` and `mypy` (strict mode) across the orchestration layer.
+
+
 ## v0.3.0 (2026-04-10)
 
 ### ✨ Infrastructure Adapters

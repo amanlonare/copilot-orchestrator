@@ -1,6 +1,9 @@
 import logging
 
 from copilot_orchestrator.domain.entities.citation import Citation
+from copilot_orchestrator.domain.entities.message import AgentMessage
+from copilot_orchestrator.domain.entities.query import UserQuery
+from copilot_orchestrator.domain.enums.message_role import MessageRole
 
 logger = logging.getLogger(__name__)
 
@@ -38,3 +41,22 @@ class FallbackService:
 
         logger.info("Found sufficient context with max score %.2f. No fallback.", max_score)
         return False
+
+    def generate_fallback_response(self, query: UserQuery) -> AgentMessage:
+        """Generate a polite fallback response when context is missing.
+
+        Args:
+            query: The user's target query.
+
+        Returns:
+            An AgentMessage with the fallback content.
+        """
+        logger.info("Generating fallback response for session: %s", query.session_id)
+        content = (
+            "I'm sorry, but I couldn't find specific information in the available knowledge "
+            "to answer your question accurately. Please try rephrasing your request or "
+            "contact support if the issue persists."
+        )
+        return AgentMessage(
+            role=MessageRole.ASSISTANT, content=content, metadata={"fallback": True}
+        )

@@ -19,22 +19,40 @@ class RetrievalStrategyService:
         """
         self._gateway = gateway
 
-    async def retrieve_for_query(self, query: UserQuery, top_k: int = 5) -> RetrievalResult:
+    def select_strategy(self, query: UserQuery) -> RetrievalMode:
+        """Determine the best retrieval mode for the given query.
+
+        Args:
+            query: The processed user query.
+
+        Returns:
+            The recommended RetrievalMode.
+        """
+        logger.debug("Selecting retrieval strategy for: %s", query.text)
+        # For MVP, we default to HYBRID.
+        # Future logic: analyze query length, keywords, or intent to choose VECTOR/KEYWORD.
+        return RetrievalMode.HYBRID
+
+    async def retrieve_for_query(
+        self, query: UserQuery, mode: RetrievalMode | None = None, top_k: int = 5
+    ) -> RetrievalResult:
         """Execute retrieval based on the current strategy.
 
         Args:
             query: The processed user query.
+            mode: Optional retrieval mode override.
             top_k: Number of results to retrieve.
 
         Returns:
             A RetrievalResult containing citations from knowledge bases.
         """
-        logger.debug("Executing retrieval for query: %s (top_k=%d)", query.text, top_k)
+        target_mode = mode or self.select_strategy(query)
+        logger.debug(
+            "Executing retrieval for query: %s (mode=%s, top_k=%d)", query.text, target_mode, top_k
+        )
 
-        # In a real implementation, we might choose the mode based on the query or intent.
-        # For now, we default to HYBRID as per the phase plan.
         retrieval_metadata = {
-            "mode": RetrievalMode.HYBRID,
+            "mode": target_mode,
             "top_k": top_k,
             **(query.metadata or {}),
         }
