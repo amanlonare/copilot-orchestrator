@@ -24,3 +24,5 @@ repos:
           - loguru>=0.7.0
           - types-python-jose
           - types-redis
+          - pytest
+          - pytest-asyncio
