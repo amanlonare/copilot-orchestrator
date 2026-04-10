@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-04-10
+
+### Added
+- OpenAIClient adapter implementing the `LLMClient` port for gpt-4o-mini generation.
+- DataLayerClient adapter for external knowledge retrieval.
+- InMemorySessionStore for conversation persistence and history management.
+- StructuredLogger for JSON-formatted telemetry and tracing.
+- TelemetryClient domain port to decouple infrastructure-specific observability logic.
+- Comprehensive unit test suite for all new infrastructure components.
+
 ## v0.2.0 (2026-04-09)
 
 ### ✨ Application Services
