@@ -2,15 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.0] - 2026-04-10
+## v0.3.0 (2026-04-10)
 
-### Added
-- OpenAIClient adapter implementing the `LLMClient` port for gpt-4o-mini generation.
-- DataLayerClient adapter for external knowledge retrieval.
-- InMemorySessionStore for conversation persistence and history management.
-- StructuredLogger for JSON-formatted telemetry and tracing.
-- TelemetryClient domain port to decouple infrastructure-specific observability logic.
-- Comprehensive unit test suite for all new infrastructure components.
+### ✨ Infrastructure Adapters
+- **OpenAI Adapter**: Implemented `LLMClient` port using `AsyncOpenAI` for gpt-4o-mini generation.
+- **Data Retrieval**: Built `DataLayerClient` to handle external knowledge fetching across multiple modes (Vector, Keyword, Hybrid).
+- **Session Persistence**: Added `InMemorySessionStore` for high-performance, asynchronous conversation history management.
+- **Structured Telemetry**: Integrated `StructuredLogger` using `loguru` to provide cloud-native JSON observability.
+- **Domain Ports**: Created `TelemetryClient` interface to decouple business logic from specific logging implementations.
+- **Verification**: Established 100% unit test coverage and pre-commit verification for all new components.
 
 ## v0.2.0 (2026-04-09)
 
