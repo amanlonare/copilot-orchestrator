@@ -33,7 +33,7 @@ def test_query_intake_trims_whitespace() -> None:
 
 def test_query_intake_raises_value_error_for_empty_query() -> None:
     service = QueryIntakeService()
-    with pytest.raises(ValueError, match="Query cannot be empty."):
+    with pytest.raises(ValueError, match=r"Query cannot be empty\."):
         service.process("   ")
 
 
@@ -109,7 +109,7 @@ async def test_retrieval_strategy_queries_gateway() -> None:
 
     assert result == mock_result
     gateway.retrieve.assert_called_once()
-    args, kwargs = gateway.retrieve.call_args
+    _, kwargs = gateway.retrieve.call_args
     assert kwargs["query"] == "how to build agents"
     assert kwargs["metadata"]["mode"] == RetrievalMode.HYBRID
 
@@ -154,7 +154,7 @@ async def test_generation_service_calls_provider() -> None:
     expected_msg_count = 2
     assert response == mock_response
     provider.generate.assert_called_once()
-    args, kwargs = provider.generate.call_args
+    args, _ = provider.generate.call_args
     messages = args[0]
     assert len(messages) == expected_msg_count  # System + User (No history in this case)
     assert messages[0].role == MessageRole.SYSTEM

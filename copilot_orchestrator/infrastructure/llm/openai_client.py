@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from openai import AsyncOpenAI
 
 from copilot_orchestrator.domain.entities.message import AgentMessage
@@ -45,7 +47,7 @@ class OpenAIClient(LLMProvider):
         # Call the provider
         response = await self._client.chat.completions.create(
             model=self._model,
-            messages=openai_messages,
+            messages=cast(Any, openai_messages),
         )
 
         # Map back to domain
