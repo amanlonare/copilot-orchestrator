@@ -1,6 +1,6 @@
 [project]
 name = "copilot-orchestrator"
-version = "0.6.0"
+version = "0.7.0"
 description = "Orchestration Layer for the Copilot system"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -65,7 +65,7 @@ exclude = ["tests", "venv", ".venv"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.6.0"
+version = "0.7.0"
 tag_format = "v$version"
 update_changelog_on_bump = false
 version_files = [
