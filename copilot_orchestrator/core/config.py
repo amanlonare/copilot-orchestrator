@@ -32,9 +32,26 @@ class Settings(BaseSettings):
     DATA_LAYER_BASE_URL: str = "http://localhost:8001"
     DATA_LAYER_API_KEY: SecretStr | None = None
 
+    # Telemetry
+    LANGFUSE_ENABLED: bool = False
+    LANGFUSE_PUBLIC_KEY: str | None = None
+    LANGFUSE_SECRET_KEY: str | None = None
+    LANGFUSE_HOST: str = "https://cloud.langfuse.com"
+
+    OTEL_ENABLED: bool = True
+    HONEYCOMB_API_KEY: str | None = None
+    HONEYCOMB_DATASET: str | None = None
+    OTEL_SERVICE_NAME: str = "copilot-orchestrator"
+
     # Logging
     LOG_LEVEL: str = "INFO"
-    LOG_FORMAT_JSON: bool = True
+    LOG_FORMAT_JSON: bool = False
+    LOG_FILE: str | None = None
+
+    # Retrieval
+    RETRIEVER_TYPE: str = "mock"
+    MCP_SERVER_COMMAND: str | None = None
+    RAG_RELEVANCE_THRESHOLD: float = 0.1
 
 
 settings = Settings()

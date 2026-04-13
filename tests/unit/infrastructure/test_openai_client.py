@@ -8,7 +8,7 @@ from copilot_orchestrator.domain.enums.message_role import MessageRole
 from copilot_orchestrator.infrastructure.llm.openai_client import OpenAIClient
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_openai_client_generate_calls_sdk_correctly() -> None:
     # Arrange
     mock_sdk = MagicMock(spec=AsyncOpenAI)
@@ -42,7 +42,7 @@ async def test_openai_client_generate_calls_sdk_correctly() -> None:
     assert sent_messages[0]["content"] == "Hello"
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_openai_client_handles_empty_content() -> None:
     mock_sdk = MagicMock(spec=AsyncOpenAI)
     mock_sdk.chat = MagicMock()
@@ -61,7 +61,7 @@ async def test_openai_client_handles_empty_content() -> None:
     assert result.role == MessageRole.ASSISTANT
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_openai_client_includes_name_in_payload() -> None:
     mock_sdk = MagicMock(spec=AsyncOpenAI)
     mock_sdk.chat = MagicMock()

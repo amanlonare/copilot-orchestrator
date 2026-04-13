@@ -14,12 +14,14 @@ async def fallback_node(state: OrchestratorState, config: RunnableConfig) -> dic
 
     Delegates to FallbackService.
     """
-    logger.info("Executing fallback_node")
+    logger.info("--- [Node: Fallback] Context insufficient. Generating safety response ---")
 
     cfg = config.get("configurable", {})
     service: FallbackService = cfg.get("fallback_service", FallbackService())
 
     query = state["normalized_query"]
 
+    logger.debug(f"Fallback: Executing guardrail logic for UserID: {query.user_id}")
     answer = service.generate_fallback_response(query)
+    logger.info("Fallback: Successfully generated safety answer.")
     return {"answer": answer, "fallback_flag": True}

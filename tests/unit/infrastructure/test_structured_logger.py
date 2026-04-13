@@ -5,7 +5,7 @@ import pytest
 from copilot_orchestrator.infrastructure.telemetry.structured_logger import StructuredLoggerClient
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_structured_logger_records_event(monkeypatch: pytest.MonkeyPatch) -> None:
     # Arrange
     mock_logger = MagicMock()

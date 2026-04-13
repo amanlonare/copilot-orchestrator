@@ -1,6 +1,9 @@
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from langfuse import propagate_attributes
+from opentelemetry import trace
 
 from copilot_orchestrator.domain.entities.query import OrchestratorRequest, UserQuery
 from copilot_orchestrator.domain.entities.session import Session
@@ -22,6 +25,16 @@ async def chat(
     Validates the incoming schema, maps to domain Request/Session objects,
     and executes the LangGraph orchestration flow.
     """
+    logging.info(
+        f"Received chat request: session_id={request.session_id}, user_id={request.user_id}"
+    )
+
+    # Honeycomb deep visibility: attach metadata to current request span
+    span = trace.get_current_span()
+    span.set_attribute("app.session_id", request.session_id or "default")
+    span.set_attribute("app.user_id", request.user_id or "anonymous")
+    span.set_attribute("app.query", request.query[:200])
+
     try:
         # 1. Map External Request to Domain entities
         # Note: In a production app, we would load the session from the SessionService here
@@ -42,10 +55,30 @@ async def chat(
             "warnings": [],
         }
 
-        # 3. Execute Graph
+        # 3. Collect Telemetry Callbacks
+        callbacks = []
+        for client in services.get("_telemetry", []):
+            handler = client.get_callback_handler()
+            if handler:
+                callbacks.append(handler)
+
+        # 4. Execute Graph
         # We pass the application services via the 'configurable' key in LangGraph config
-        config = {"configurable": services}
-        final_state = await graph.ainvoke(initial_state, config=config)
+        config = {
+            "configurable": {**services, "thread_id": request.session_id or "default-session"},
+            "callbacks": callbacks,
+            "metadata": {
+                "langfuse_session_id": request.session_id or "default-session",
+                "langfuse_user_id": request.user_id or "anonymous",
+            },
+        }
+
+        with propagate_attributes(
+            session_id=request.session_id or "default-session",
+            user_id=request.user_id or "anonymous",
+            trace_name=f"Copilot: {request.query[:60]}",
+        ):
+            final_state = await graph.ainvoke(initial_state, config=config)
 
         # 4. Handle Failures in state
         if final_state.get("errors"):
@@ -68,12 +101,19 @@ async def chat(
                 for c in final_state["retrieved_result"].items
             ]
 
+        # 5. Extract Trace IDs for metadata
+        trace_metadata = dict(final_state.get("trace_metadata", {}))
+        for handler in callbacks:
+            # Langfuse specific trace ID extraction
+            if hasattr(handler, "last_trace_id") and handler.last_trace_id:
+                trace_metadata["langfuse_trace_id"] = handler.last_trace_id
+
         return ChatResponse(
             answer=answer_content,
             citations=citations,
             fallback_flag=final_state.get("fallback_flag", False),
             session_id=final_state["session"].session_id,
-            trace_metadata=dict(final_state.get("trace_metadata", {})),
+            trace_metadata=trace_metadata,
         )
 
     except Exception as e:

@@ -14,16 +14,16 @@ async def select_strategy_node(state: OrchestratorState, config: RunnableConfig)
 
     Delegates to RetrievalStrategyService.
     """
-    logger.info("Executing select_strategy_node")
+    logger.info("--- [Node: Select Strategy] Determining best retrieval approach ---")
 
-    # RetrievalStrategyService requires a gateway, but here we only need 'select_strategy'
-    # which is currently pure. In a real system, we'd pull from config/registry.
     service = config.get("configurable", {}).get("retrieval_strategy_service")
 
-    # Fallback to a default if not provided (for MVP/testing)
     if not service:
-        # We shouldn't really reach here if the graph is set up correctly
+        logger.warning(
+            "SelectStrategy: RetrievalStrategyService not found in config. Defaulting to HYBRID."
+        )
         return {"retrieval_strategy": RetrievalMode.HYBRID}
 
     strategy = service.select_strategy(state["normalized_query"])
+    logger.info(f"SelectStrategy: Decided on strategy: {strategy}")
     return {"retrieval_strategy": strategy}

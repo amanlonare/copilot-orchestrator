@@ -55,7 +55,7 @@ def test_query_intake_assigns_session_and_user_id() -> None:
 
 
 # First asyncio test also needs it
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_session_service_loads_new_session_if_not_found() -> None:
     repo = MagicMock(spec=SessionRepository)
     repo.load = AsyncMock(return_value=None)
@@ -67,7 +67,7 @@ async def test_session_service_loads_new_session_if_not_found() -> None:
     assert len(session.history) == 0
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_session_service_loads_existing_session() -> None:
     existing_session = Session(session_id="ex123")
     repo = MagicMock(spec=SessionRepository)
@@ -78,7 +78,7 @@ async def test_session_service_loads_existing_session() -> None:
     assert session is existing_session
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_session_service_appends_and_saves() -> None:
     session = Session(session_id="s1")
     repo = MagicMock(spec=SessionRepository)
@@ -96,7 +96,7 @@ async def test_session_service_appends_and_saves() -> None:
 # --- RetrievalStrategyService Tests ---
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_retrieval_strategy_queries_gateway() -> None:
     gateway = MagicMock(spec=RetrieverGateway)
     mock_result = RetrievalResult(items=[], mode=RetrievalMode.HYBRID)
@@ -139,7 +139,7 @@ def test_context_builder_handles_empty_list() -> None:
 # --- GenerationService Tests ---
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_generation_service_calls_provider() -> None:
     provider = MagicMock(spec=LLMProvider)
     mock_response = AgentMessage(content="World", role=MessageRole.ASSISTANT)

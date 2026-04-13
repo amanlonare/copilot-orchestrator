@@ -14,15 +14,19 @@ async def assemble_context_node(state: OrchestratorState, config: RunnableConfig
 
     Delegates to ContextBuilderService.
     """
-    logger.info("Executing assemble_context_node")
+    logger.info("--- [Node: Assemble Context] Building prompt context from retrieval ---")
 
     cfg = config.get("configurable", {})
     service: ContextBuilderService = cfg.get("context_builder_service", ContextBuilderService())
 
     result = state.get("retrieved_result")
     if not result or not result.items:
-        logger.info("No retrieved items to assemble.")
+        logger.warning(
+            "AssembleContext: No retrieved results found to assemble. Switching to fallback."
+        )
         return {"assembled_context": "", "fallback_flag": True}
 
+    logger.debug(f"AssembleContext: Formatting {len(result.items)} citations into context string.")
     context = service.build_context(result.items)
+    logger.info(f"AssembleContext: Successfully built context. Total length: {len(context)} chars.")
     return {"assembled_context": context}

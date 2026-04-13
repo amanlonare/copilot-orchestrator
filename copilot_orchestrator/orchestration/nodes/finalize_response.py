@@ -16,24 +16,28 @@ async def finalize_response_node(
 
     Delegates to SessionService.
     """
-    logger.info("Executing finalize_response_node")
+    uid = state["request"].query.user_id
+    logger.info(f"--- [Node: Finalize] Saving session for User: {uid} ---")
 
     cfg = config.get("configurable", {})
     service = cast(SessionService, cfg.get("session_service"))
 
     if not service:
-        logger.error("SessionService not found in config")
+        logger.error("FinalizeResponse: SessionService missing from config!")
         return {"errors": [*state.get("errors", []), "Session service missing"]}
 
     session = state["session"]
     answer = state.get("answer")
 
     if not answer:
-        logger.warning("No answer found in state during finalization.")
+        logger.warning("FinalizeResponse: No answer object found in state. Skipping persistence.")
         return {}
 
     try:
         await service.append_and_save(session=session, message=answer)
+        sid = session.session_id
+        hist_len = len(session.history)
+        logger.info(f"FinalizeResponse: Saved session {sid}. History: {hist_len}")
         return {"session": session}
     except Exception as e:
         logger.error("Session finalization failed: %s", str(e))

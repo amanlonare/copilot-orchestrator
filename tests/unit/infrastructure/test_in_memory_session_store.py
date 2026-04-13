@@ -8,7 +8,7 @@ from copilot_orchestrator.infrastructure.sessions.in_memory_session_store import
 )
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_in_memory_session_store_save_and_load() -> None:
     # Arrange
     store = InMemorySessionStore()
@@ -26,7 +26,7 @@ async def test_in_memory_session_store_save_and_load() -> None:
     assert loaded.history[0].content == "hello"
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_in_memory_session_store_is_decoupled_by_deepcopy() -> None:
     # Arrange
     store = InMemorySessionStore()
@@ -44,7 +44,7 @@ async def test_in_memory_session_store_is_decoupled_by_deepcopy() -> None:
     assert len(reloaded.history) == 0
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_in_memory_session_store_load_missing_returns_none() -> None:
     store = InMemorySessionStore()
     assert await store.load("missing") is None

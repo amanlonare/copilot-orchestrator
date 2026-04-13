@@ -38,6 +38,20 @@ def setup_logging() -> None:
         diagnose=True,
     )
 
+    # Add file handler if configured
+    if settings.LOG_FILE:
+        logger.add(
+            settings.LOG_FILE,
+            level=settings.LOG_LEVEL,
+            format=handler_format,
+            serialize=settings.LOG_FORMAT_JSON,
+            rotation="10 MB",
+            retention="1 week",
+            compression="zip",
+            backtrace=True,
+            diagnose=True,
+        )
+
     # Intercept standard library logging
     class InterceptHandler(logging.Handler):
         def emit(self, record: logging.LogRecord) -> None:

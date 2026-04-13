@@ -44,3 +44,11 @@ class StructuredLoggerClient(TelemetryClient):
         # We log at INFO level for operational events.
         # loguru's default configuration will handle the formatting.
         self._logger.info(event_payload)
+
+    def get_callback_handler(self) -> Any:
+        """Structured logger does not support LangChain callbacks directly."""
+        return None
+
+    def flush(self) -> None:
+        """No-op for loguru as it flushes automatically or via sinks."""
+        pass
