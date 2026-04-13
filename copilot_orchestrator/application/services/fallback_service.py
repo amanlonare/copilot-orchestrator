@@ -1,5 +1,6 @@
 import logging
 
+from copilot_orchestrator.core.config import settings
 from copilot_orchestrator.domain.entities.citation import Citation
 from copilot_orchestrator.domain.entities.message import AgentMessage
 from copilot_orchestrator.domain.entities.query import UserQuery
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 class FallbackService:
     """Service to decide if a response should be generic or grounded."""
 
-    def evaluate_fallback(self, citations: list[Citation], min_score: float = 0.5) -> bool:
+    def evaluate_fallback(self, citations: list[Citation], min_score: float | None = None) -> bool:
         """Analyze citations to decide if fallback is necessary.
 
         Args:
@@ -21,7 +22,13 @@ class FallbackService:
         Returns:
             True if fallback should be triggered, False otherwise.
         """
-        logger.debug("Evaluating fallback for %d citations", len(citations))
+
+        config_threshold = settings.RAG_RELEVANCE_THRESHOLD
+        threshold = min_score if min_score is not None else config_threshold
+
+        logger.debug(
+            "Evaluating fallback for %d citations (Threshold: %.2f)", len(citations), threshold
+        )
 
         if not citations:
             logger.info("No citations found. Triggering fallback.")
@@ -31,11 +38,11 @@ class FallbackService:
         # (Assuming score is 0.0 to 1.0)
         max_score = max((c.score or 0.0 for c in citations), default=0.0)
 
-        if max_score < min_score:
+        if max_score < threshold:
             logger.info(
                 "Max score (%.2f) below threshold (%.2f). Triggering fallback.",
                 max_score,
-                min_score,
+                threshold,
             )
             return True
 

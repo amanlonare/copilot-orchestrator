@@ -18,25 +18,46 @@ class MCPRetrieverGateway(RetrieverGateway):
     tool provided by the data-layer-manager.
     """
 
-    def __init__(self, mcp_client_session: Any) -> None:
-        """Initialize with an active MCP Client session.
+    def __init__(
+        self, mcp_client_session: Any = None, services: dict[str, Any] | None = None
+    ) -> None:
+        """Initialize with an active MCP Client session or a services container.
 
         Args:
-            mcp_client_session: The active `mcp.client.session.ClientSession`
-                (typed as Any to avoid hard dependency on mcp library internals
-                in the signature, though it expects a valid session).
+            mcp_client_session: The active `mcp.client.session.ClientSession`.
+            services: Optional global services dictionary for lazy session lookup.
         """
         self.client_session = mcp_client_session
+        self.services = services or {}
 
     async def retrieve(
         self, query: str, metadata: Mapping[str, Any] | None = None
     ) -> RetrievalResult:
         """Call the MCP tool to retrieve context."""
+
+        # Lazy session lookup to fix initialization race condition
+        session = self.client_session
+        if session:
+            logger.debug("MCPRetriever: Using directly injected session.")
+
+        if not session and self.services:
+            session = self.services.get("_mcp_session")
+            if session:
+                logger.debug("MCPRetriever: Lazy session lookup successful.")
+
+        if not session:
+            logger.error("No active MCP session available for retrieval.")
+            return RetrievalResult(
+                items=[],
+                mode=RetrievalMode.HYBRID,
+                metadata={"source": "mcp_retriever", "error": "No active session"},
+            )
+
         logger.info(f"Delegating retrieval to MCP for query: '{query}'")
 
         try:
             # We call the 'search_knowledge' tool defined on the data-layer-manager MVP
-            result = await self.client_session.call_tool(
+            result = await session.call_tool(
                 "search_knowledge", arguments={"query": query, "strategy": "hybrid"}
             )
 

@@ -16,20 +16,25 @@ async def retrieve_context_node(state: OrchestratorState, config: RunnableConfig
 
     Delegates to RetrievalStrategyService.
     """
-    logger.info("Executing retrieve_context_node")
+    query_text = state["normalized_query"].text[:40]
+    logger.info(f"--- [Node: Retrieve] Fetching context for: '{query_text}...' ---")
 
     cfg = config.get("configurable", {})
     service = cast(RetrievalStrategyService, cfg.get("retrieval_strategy_service"))
 
     if not service:
-        logger.error("RetrievalStrategyService not found in config")
+        logger.error("RetrieveContext: RetrievalStrategyService missing from config!")
         return {"errors": [*state.get("errors", []), "Retrieval service missing"]}
 
     query = state["normalized_query"]
     mode = state.get("retrieval_strategy")
 
     try:
+        logger.debug(f"RetrieveContext: Executing retrieval (Mode: {mode})")
         result = await service.retrieve_for_query(query=query, mode=mode)
+
+        num_results = len(result.items) if result else 0
+        logger.info(f"RetrieveContext: Retrieval complete. Found {num_results} context items.")
         return {"retrieved_result": result}
     except Exception as e:
         logger.error("Retrieval execution failed: %s", str(e))

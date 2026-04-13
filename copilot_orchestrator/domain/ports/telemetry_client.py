@@ -16,11 +16,17 @@ class TelemetryClient(Protocol):
         data: Mapping[str, Any] | None = None,
         trace_id: str | None = None,
     ) -> None:
-        """Record an operational or business event.
+        """Record an operational or business event."""
+        ...
 
-        Args:
-            name: Human-readable identifier for the event (e.g., "generation_started").
-            data: Structured payload for the event.
-            trace_id: Optional correlation ID for distributed tracing.
+    def get_callback_handler(self) -> Any:
+        """Return a LangChain-compatible callback handler if supported.
+
+        Returns:
+            An instance of a BaseCallbackHandler (e.g., LangfuseCallbackHandler) or None.
         """
+        ...
+
+    def flush(self) -> None:
+        """Force flush pending telemetry events."""
         ...

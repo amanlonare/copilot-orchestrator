@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.7.0 (2026-04-13)
+
+### ✨ Quality, Observability & Stability
+- **Node-Level Tracing**: Implemented a `traced_node` decorator in `graph.py` to provide immediate terminal visibility into LangGraph node transitions and output keys.
+- **Configurable RAG Threshold**: Introduced `RAG_RELEVANCE_THRESHOLD` in global settings and `.env`, allowing dynamic control over the grounded answer vs. fallback decision logic.
+- **MCP Connectivity Fix**: Resolved a critical lifecycle issue where the `client_session` was not being correctly injected into the `MCPRetrieverGateway` across the graph nodes.
+- **Better Diagnostics**: Enhanced `FallbackService` logging to output real-time relevance scores and comparison thresholds, simplifying the tuning process.
+- **Improved Retrieval Confidence**: Refactored `evaluate_fallback` logic to support highly granular relevance scores (e.g., < 0.1) often returned by RAG search engines.
+
+
 ## v0.6.0 (2026-04-10)
 
 ### ✨ Presentation Layer
