@@ -20,7 +20,7 @@ from copilot_orchestrator.domain.enums.message_role import MessageRole
 from copilot_orchestrator.domain.enums.retrieval_mode import RetrievalMode
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def mock_services() -> dict[str, Any]:
     return {
         "intake": MagicMock(spec=QueryIntakeService),
@@ -32,7 +32,7 @@ def mock_services() -> dict[str, Any]:
     }
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_run_orchestrator_success(mock_services: dict[str, Any]) -> None:
     # 1. Setup mocks
     query = UserQuery(text="hello", session_id="s1")

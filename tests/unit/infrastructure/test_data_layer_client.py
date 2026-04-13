@@ -7,7 +7,7 @@ from copilot_orchestrator.domain.enums.retrieval_mode import RetrievalMode
 from copilot_orchestrator.infrastructure.retrieval.data_layer_client import DataLayerClient
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_data_layer_client_retrieve_success() -> None:
     # Arrange
     base_url = "https://api.test"
@@ -51,7 +51,7 @@ async def test_data_layer_client_retrieve_success() -> None:
         assert result.metadata["provider_id"] == "test-provider"
 
 
-@pytest.mark.asyncio  # type: ignore[misc]
+@pytest.mark.asyncio
 async def test_data_layer_client_handles_error() -> None:
     # Arrange
     base_url = "https://api.test"
