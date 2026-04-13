@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Any, Literal
 
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
@@ -32,7 +32,7 @@ def route_after_retrieval(
     return "assemble_context"
 
 
-def create_orchestration_graph() -> StateGraph[OrchestratorState]:
+def create_orchestration_graph() -> Any:
     """Creates the compiled LangGraph for the copilot orchestrator."""
     builder = StateGraph(OrchestratorState)
 

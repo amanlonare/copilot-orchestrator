@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## v0.6.0 (2026-04-10)
+
+### ✨ Presentation Layer
+- **FastAPI Core**: Implemented a robust API server with `/chat` for orchestration and `/health` for diagnostics.
+- **Interactive CLI**: Built a high-fidelity CLI using `rich` with streaming placeholders and formatted citation blocks.
+- **MCP Integration**: Developed `MCPRetrieverGateway` to interface with the external Data Layer Manager via the Model Context Protocol.
+- **Environment Parity**: Added `RETRIEVER_TYPE` branching to support both mocked local development and live MCP-powered integration.
+- **Extensive Coverage**: Achieved baseline verification for all presentation components with unit tests for API and CLI layers.
+- **DevEx Tooling**: Configured `uv` with new presentation-layer dependencies for streamlined builds.
+
 ## v0.5.0 (2026-04-10)
 
 ### ✨ Orchestration & Graph
