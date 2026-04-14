@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "copilot-orchestrator"
     VERSION: str = "0.0.0"
     ENVIRONMENT: str = "development"
+    ACTIVE_DOMAIN: str = "ecommerce"
 
     # API Configuration
     API_V1_STR: str = "/v1"

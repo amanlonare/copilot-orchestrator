@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -20,6 +20,8 @@ class AgentMessage:
 
     role: MessageRole
     content: str
-    citations: list[Citation] = field(default_factory=list)
+    citations: Sequence[Citation] = field(default_factory=list)
     name: str | None = None
+    tool_calls: Sequence[Mapping[str, Any]] = field(default_factory=list)
+    tool_call_id: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)

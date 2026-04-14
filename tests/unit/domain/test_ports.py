@@ -6,7 +6,13 @@ from copilot_orchestrator.domain.ports.session_repository import SessionReposito
 
 
 class MockLLM:
-    async def generate(self, messages: Any) -> Any:
+    async def generate(self, messages: Any, tools: Any = None) -> Any:
+        return None
+
+    async def generate_structured(self, messages: Any, response_model: type) -> Any:
+        return None
+
+    async def stream(self, messages: Any) -> Any:
         return None
 
 

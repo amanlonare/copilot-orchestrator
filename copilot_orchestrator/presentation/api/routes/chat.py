@@ -1,7 +1,10 @@
+import json
 import logging
+from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from langfuse import propagate_attributes
 from opentelemetry import trace
 
@@ -91,15 +94,23 @@ async def chat(
 
         citations = []
         if final_state.get("retrieved_result"):
-            citations = [
-                CitationModel(
-                    source_id=c.source_id,
-                    snippet=c.snippet,
-                    source_title=c.source_title,
-                    score=c.score,
+            result = final_state["retrieved_result"]
+            is_dict = isinstance(result, dict)
+            items = result.get("items", []) if is_dict else getattr(result, "items", [])
+
+            for c in items:
+                # Safe access for both object and dict attributes
+                def get_attr(obj: Any, attr: str) -> Any:
+                    return obj.get(attr) if isinstance(obj, dict) else getattr(obj, attr, None)
+
+                citations.append(
+                    CitationModel(
+                        source_id=get_attr(c, "source_id") or "unknown",
+                        snippet=get_attr(c, "snippet") or "",
+                        source_title=get_attr(c, "source_title"),
+                        score=get_attr(c, "score"),
+                    )
                 )
-                for c in final_state["retrieved_result"].items
-            ]
 
         # 5. Extract Trace IDs for metadata
         trace_metadata = dict(final_state.get("trace_metadata", {}))
@@ -119,3 +130,129 @@ async def chat(
     except Exception as e:
         # Presentation layer catch-all
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+def _get_citations_from_state(final_state: dict[str, Any]) -> list[dict[str, Any]]:
+    """Safe extraction of citations from graph state."""
+    citations: list[dict[str, Any]] = []
+    if final_state.get("retrieved_result"):
+        res = final_state["retrieved_result"]
+        # Type safe access to items
+        if isinstance(res, dict):
+            res_items = res.get("items", [])
+        else:
+            res_items = getattr(res, "items", [])
+
+        for c in res_items:
+            if isinstance(c, dict):
+                citations.append(
+                    {
+                        "source_id": c.get("source_id", "unknown"),
+                        "snippet": c.get("snippet", ""),
+                        "source_title": c.get("source_title"),
+                    }
+                )
+            else:
+                citations.append(
+                    {
+                        "source_id": getattr(c, "source_id", "unknown"),
+                        "snippet": getattr(c, "snippet", ""),
+                        "source_title": getattr(c, "source_title", None),
+                    }
+                )
+    return citations
+
+
+@router.post("/stream")
+async def chat_stream(
+    request: ChatRequest,
+    graph: Any = Depends(get_orchestrator_graph),  # noqa: B008
+    services: dict[str, Any] = Depends(get_services),  # noqa: B008
+) -> StreamingResponse:
+    """Streamed endpoint for real-time interaction using Server-Sent Events (SSE).
+
+    This endpoint multiplexes different event types (node progress, token content,
+    terminal metadata) to provide a rich, interactive user experience.
+
+    Args:
+        request: Validated chat request.
+        graph: The LangGraph instance.
+        services: Application services for injection.
+
+    Returns:
+        A StreamingResponse yielding SSE events.
+    """
+
+    async def event_generator() -> AsyncIterator[str]:
+        """Internal generator to stream LangGraph events as conformant SSE chunks."""
+        # Setup (similar to sync chat)
+        user_query = UserQuery(
+            text=request.query,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            metadata=request.metadata,
+        )
+        initial_state = {
+            "request": OrchestratorRequest(query=user_query),
+            "session": Session(session_id=request.session_id or "default-stream"),
+            "errors": [],
+        }
+
+        callbacks = []
+        for client in services.get("_telemetry", []):
+            handler = client.get_callback_handler()
+            if handler:
+                callbacks.append(handler)
+
+        config = {
+            "configurable": {**services, "thread_id": request.session_id or "default-stream"},
+            "callbacks": callbacks,
+            "metadata": {
+                "langfuse_session_id": request.session_id or "default-stream",
+                "langfuse_user_id": request.user_id or "anonymous",
+            },
+        }
+
+        # Track final state for metadata delivery
+        final_state = initial_state
+
+        try:
+            # Use astream_events (v2) for multiplexing
+            async for event in graph.astream_events(initial_state, config=config, version="v2"):
+                kind = event["event"]
+                name = event["name"]
+
+                # 1. Node Progress
+                if kind == "on_chain_start" and name == "LangGraph":
+                    yield f"event: node\ndata: {json.dumps({'node': 'start'})}\n\n"
+
+                elif kind == "on_node_start":
+                    node_data = json.dumps({"node": name, "status": "started"})
+                    yield f"event: node\ndata: {node_data}\n\n"
+
+                # 2. Token Content (from generate_answer or format_action_response)
+                elif kind == "on_chat_model_stream":
+                    content = event["data"].get("chunk", {}).content
+                    if content:
+                        yield f"event: content\ndata: {json.dumps({'chunk': content})}\n\n"
+
+                # Capture final state from completion events
+                if kind == "on_chain_end" and name == "LangGraph":
+                    final_state = event["data"].get("output", {})
+
+            # 3. Terminal Metadata
+            metadata_payload = {
+                "citations": _get_citations_from_state(final_state),
+                "session_id": getattr(
+                    final_state.get("session", initial_state["session"]), "session_id", "default"
+                ),
+                "fallback_flag": final_state.get("fallback_flag", False),
+                "trace_metadata": final_state.get("trace_metadata", {}),
+            }
+            yield f"event: metadata\ndata: {json.dumps(metadata_payload)}\n\n"
+
+        except Exception as e:
+            logging.error(f"Streaming failed: {e}")
+            yield f"event: error\ndata: {json.dumps({'detail': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

@@ -98,6 +98,7 @@ def get_services() -> dict[str, Any]:
         # 4. Initialize Services (Mutate global dict to preserve references)
         _services.update(
             {
+                "llm_provider": llm_provider,
                 "query_intake_service": QueryIntakeService(),
                 "retrieval_strategy_service": RetrievalStrategyService(retriever_gateway),
                 "context_builder_service": ContextBuilderService(),
