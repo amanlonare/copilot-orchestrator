@@ -5,6 +5,9 @@ from copilot_orchestrator.domain.entities.query import UserQuery
 from copilot_orchestrator.domain.entities.session import Session
 from copilot_orchestrator.domain.enums.message_role import MessageRole
 from copilot_orchestrator.domain.ports.llm_provider import LLMProvider
+from copilot_orchestrator.orchestration.prompts.answer_generation import (
+    ANSWER_GENERATION_SYSTEM_PROMPT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,18 +39,17 @@ class GenerationService:
         logger.debug("Generating answer for query: %s", query.text)
 
         # 1. Prepare messages list starting with System Prompt containing context
-        system_content = (
-            "You are a helpful and professional assistant. "
-            "Use the following context to answer the user's question. "
-            "If the context doesn't contain the answer, "
-            "say you don't know based on the context.\n\n"
-            f"Context:\n{context}"
-        )
+
+        system_content = ANSWER_GENERATION_SYSTEM_PROMPT.format(context=context)
 
         messages = [AgentMessage(role=MessageRole.SYSTEM, content=system_content)]
 
-        # 2. Add history (avoiding duplicating messages if they are already in session)
-        messages.extend(session.history)
+        # 2. Add history with windowing
+        # We keep only the last 6 messages to stay within common context limits
+        # and maintain speed while preserving relevant thread context.
+        max_history = 6
+        history = session.history[-max_history:] if session.history else []
+        messages.extend(history)
 
         # 3. Add latest user query
         messages.append(AgentMessage(role=MessageRole.USER, content=query.text))

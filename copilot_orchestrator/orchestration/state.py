@@ -1,10 +1,12 @@
 from collections.abc import Mapping
 from typing import Any, TypedDict
 
+from copilot_orchestrator.domain.entities.action import Action
 from copilot_orchestrator.domain.entities.message import AgentMessage
 from copilot_orchestrator.domain.entities.query import OrchestratorRequest, UserQuery
 from copilot_orchestrator.domain.entities.retrieval_result import RetrievalResult
 from copilot_orchestrator.domain.entities.session import Session
+from copilot_orchestrator.domain.enums.intent_type import IntentType
 from copilot_orchestrator.domain.enums.retrieval_mode import RetrievalMode
 
 
@@ -20,10 +22,13 @@ class OrchestratorState(TypedDict):
 
     # Processed Query
     normalized_query: UserQuery
+    detected_intent: IntentType | None
+    resolved_action: Action | None
 
     # Context & Session
     session: Session
     retrieval_strategy: RetrievalMode
+    tool_results: list[Any]
 
     # Retrieval Outcomes
     retrieved_result: RetrievalResult
@@ -33,6 +38,8 @@ class OrchestratorState(TypedDict):
     answer: AgentMessage | None
 
     # Metadata & Flags
+    intent_metadata: Mapping[str, Any]
+    action_metadata: Mapping[str, Any]
     fallback_flag: bool
     trace_metadata: Mapping[str, Any]
     errors: list[str]
