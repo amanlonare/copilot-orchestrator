@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from copilot_orchestrator.domain.entities.message import AgentMessage
+from copilot_orchestrator.domain.enums.intent_type import IntentType
 from copilot_orchestrator.domain.enums.message_role import MessageRole
 from copilot_orchestrator.domain.ports.llm_provider import LLMProvider
 from copilot_orchestrator.orchestration.prompts.intent_detection import (
@@ -56,7 +57,6 @@ async def detect_intent_node(state: OrchestratorState, config: Any) -> dict[str,
         }
     except Exception as e:
         logger.error(f"Intent detection failed: {e}")
-        from copilot_orchestrator.domain.enums.intent_type import IntentType
 
         return {
             "detected_intent": IntentType.KNOWLEDGE,  # Fallback

@@ -8,7 +8,9 @@ from typing import Any, Literal
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
+from loguru import logger as loguru_logger
 from opentelemetry import trace
+from rich.pretty import pretty_repr
 
 from copilot_orchestrator.application.services.fallback_service import FallbackService
 from copilot_orchestrator.core.config import settings
@@ -104,10 +106,6 @@ def traced_node(name: str, fn: Callable[..., Any]) -> Callable[..., Any]:
 
         keys = list(result.keys()) if isinstance(result, dict) else type(result)
         logger.info(f"<== [Node Execution] Exiting: {name} | Output keys: {keys}")
-
-        # Enhanced result logging using rich for pretty repr and loguru for colored tags
-        from loguru import logger as loguru_logger
-        from rich.pretty import pretty_repr
 
         # Exclude massive objects from the 'Result' view to keep logs readable
         display_result = result
