@@ -67,9 +67,9 @@ async def test_order_status_pipeline() -> None:
     res2 = await resolve_action_node(state, config)
     state.update(cast(OrchestratorState, res2))
     # The Action entity now uses the literal tool name (snake_case)
-    assert state["resolved_action"] is not None
-    assert state["resolved_action"].type == "order_status"
-    assert state["resolved_action"].parameters["order_id"] == "ABC-999"
+    assert len(state["resolved_actions"]) == 1
+    assert state["resolved_actions"][0].type == "order_status"
+    assert state["resolved_actions"][0].parameters["order_id"] == "ABC-999"
 
     # Node 3: Execute Tools
     res3 = await execute_tools_node(state, config)

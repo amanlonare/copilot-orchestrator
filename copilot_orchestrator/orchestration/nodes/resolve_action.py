@@ -77,33 +77,40 @@ async def resolve_action_node(state: OrchestratorState, config: Any) -> dict[str
                 ]
             }
 
-        # For now, we take the first tool call (single action resolution)
-        tool_call = response.tool_calls[0]
-        # Handle both dict and object (Sequence[Mapping] vs list[ToolCall])
-        fn = tool_call.get("function", {})
-        tool_name = fn.get("name", "unknown")
+        # Resolve all tool calls
+        resolved_actions = []
+        for tool_call in response.tool_calls:
+            # Handle both dict and object (Sequence[Mapping] vs list[ToolCall])
+            fn = tool_call.get("function", {})
+            tool_name = fn.get("name", "unknown")
 
-        raw_arguments = fn.get("arguments", "{}")
-        arguments = json.loads(raw_arguments)
+            raw_arguments = fn.get("arguments", "{}")
+            arguments = json.loads(raw_arguments)
 
-        # Build the Action entity
-        resolved_action = Action(
-            type=tool_name,
-            label=f"Execute {tool_name} in {active_domain}",
-            domain=domain_enum,
-            parameters=arguments,
-            metadata={
-                "reasoning": arguments.get("reasoning", "No reasoning provided."),
-                "tier": "tier_2_resolution",
+            # Build the Action entity
+            action = Action(
+                type=tool_name,
+                label=f"Execute {tool_name} in {active_domain}",
+                domain=domain_enum,
+                parameters=arguments,
+                metadata={
+                    "reasoning": arguments.get("reasoning", "No reasoning provided."),
+                    "tier": "tier_2_resolution",
+                    "active_domain": active_domain,
+                    "tool_call_id": tool_call.get("id"),
+                },
+                confidence=1.0,
+            )
+            resolved_actions.append(action)
+            logger.info(f"Action resolved [{active_domain}]: {tool_name}")
+
+        return {
+            "resolved_actions": resolved_actions,
+            "action_metadata": {
+                "count": len(resolved_actions),
                 "active_domain": active_domain,
-                "tool_call_id": tool_call.get("id"),
             },
-            confidence=1.0,
-        )
-
-        logger.info(f"Action resolved [{active_domain}]: {tool_name}")
-
-        return {"resolved_action": resolved_action, "action_metadata": resolved_action.metadata}
+        }
     except Exception as e:
         logger.error(f"Action resolution failed for domain {active_domain}: {e}")
         return {"errors": [f"Action resolution error ({active_domain}): {e!s}"]}

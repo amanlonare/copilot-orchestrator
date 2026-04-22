@@ -84,7 +84,7 @@ class RedisSessionRepository:
         # Manual serialization because of nested dataclasses and MessageRole enum
         def _serialize_msg(msg: AgentMessage) -> dict[str, Any]:
             return {
-                "role": msg.role.value,
+                "role": msg.role.value if hasattr(msg.role, "value") else msg.role,
                 "content": msg.content,
                 "citations": [
                     {
