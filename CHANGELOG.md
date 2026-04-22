@@ -1,6 +1,16 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+ 
+## v0.8.0 (2026-04-22)
+ 
+### ✨ Multi-Action & Conversational Enhanced
+- **Multi-Action Resolution**: Refactored the orchestration graph to support resolving and executing multiple tool-driven actions in a single turn (e.g., product searches across categories).
+- **Conversational Greetings**: Implemented a dedicated `generate_greeting` path for `IntentType.GREETING` queries, ensuring friendly, persona-driven responses instead of empty results.
+- **Enhanced Streaming Visibility**: Updated the `/chat/stream` endpoint to yield real-time `node` status events (intake, resolve, execute, etc.) and guaranteed delivery of final answer bodies for non-streaming nodes.
+- **Session Persistence Fix**: Resolved a critical `500 AttributeError` in the `RedisSessionRepository` caused by inconsistent serialization of AI message roles.
+- **Robust Integration Testing**: Added a full suite of pipeline tests for greeting resolution and multi-action tool execution.
+ 
 
 ## v0.7.0 (2026-04-13)
 

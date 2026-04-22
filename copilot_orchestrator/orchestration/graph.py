@@ -23,7 +23,12 @@ from copilot_orchestrator.orchestration.nodes.finalize_response import finalize_
 from copilot_orchestrator.orchestration.nodes.format_action_response import (
     format_action_response_node,
 )
-from copilot_orchestrator.orchestration.nodes.generate_answer import generate_answer_node
+from copilot_orchestrator.orchestration.nodes.generate_answer import (
+    generate_answer_node,
+)
+from copilot_orchestrator.orchestration.nodes.generate_greeting import (
+    generate_greeting_node,
+)
 from copilot_orchestrator.orchestration.nodes.intake import intake_node
 from copilot_orchestrator.orchestration.nodes.resolve_action import resolve_action_node
 from copilot_orchestrator.orchestration.nodes.retrieve_context import retrieve_context_node
@@ -34,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 def route_after_intent(
     state: OrchestratorState, config: RunnableConfig
-) -> Literal["retrieve_context", "finalize_response", "resolve_action"]:
+) -> Literal["retrieve_context", "finalize_response", "resolve_action", "generate_greeting"]:
     """Conditional edge to fork the orchestration flow based on detected intent.
 
     Routing logic:
@@ -56,8 +61,8 @@ def route_after_intent(
         return "resolve_action"
 
     if intent == IntentType.GREETING:
-        logger.info("Greeting detected. Routing directly to finalize_response.")
-        return "finalize_response"
+        logger.info("Greeting detected. Routing to generate_greeting.")
+        return "generate_greeting"
 
     # Default to KNOWLEDGE path
     return "retrieve_context"
@@ -147,6 +152,7 @@ def create_orchestration_graph(checkpointer: BaseCheckpointSaver[Any] | None = N
     builder.add_node("retrieve_context", traced_node("retrieve_context", retrieve_context_node))
     builder.add_node("assemble_context", traced_node("assemble_context", assemble_context_node))
     builder.add_node("generate_answer", traced_node("generate_answer", generate_answer_node))
+    builder.add_node("generate_greeting", traced_node("generate_greeting", generate_greeting_node))
     builder.add_node("finalize_response", traced_node("finalize_response", finalize_response_node))
     builder.add_node("fallback", traced_node("fallback", fallback_node))
 
@@ -162,6 +168,7 @@ def create_orchestration_graph(checkpointer: BaseCheckpointSaver[Any] | None = N
             "retrieve_context": "retrieve_context",
             "finalize_response": "finalize_response",
             "resolve_action": "resolve_action",
+            "generate_greeting": "generate_greeting",
         },
     )
 
@@ -169,6 +176,9 @@ def create_orchestration_graph(checkpointer: BaseCheckpointSaver[Any] | None = N
     builder.add_edge("resolve_action", "execute_tools")
     builder.add_edge("execute_tools", "format_action_response")
     builder.add_edge("format_action_response", "finalize_response")
+
+    # Greeting Path
+    builder.add_edge("generate_greeting", "finalize_response")
 
     # Knowledge path
     # (Previously select_strategy -> retrieve_context, now directly to retrieve_context)

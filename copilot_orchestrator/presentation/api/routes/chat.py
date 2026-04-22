@@ -210,6 +210,7 @@ async def chat_stream(
         initial_state = {
             "request": OrchestratorRequest(query=user_query),
             "session": Session(session_id=request.session_id or "default-stream"),
+            "resolved_actions": [],
             "errors": [],
         }
 
@@ -227,7 +228,8 @@ async def chat_stream(
                 "langfuse_user_id": request.user_id or "anonymous",
             },
         }
-        # Track final state for metadata delivery (initialize to initial state)
+        # Track streaming state
+        was_streamed = False
         final_state = initial_state
 
         # Use standard context manager to ensure Langfuse trace consistency for streaming
@@ -246,7 +248,19 @@ async def chat_stream(
                     if kind == "on_chain_start" and name == "LangGraph":
                         yield f"event: node\ndata: {json.dumps({'node': 'start'})}\n\n"
 
-                    elif kind == "on_node_start":
+                    # Map chain/node starts to progress events
+                    elif kind in ("on_node_start", "on_chain_start") and name in {
+                        "intake",
+                        "detect_intent",
+                        "retrieve_context",
+                        "resolve_action",
+                        "execute_tools",
+                        "generate_answer",
+                        "format_action_response",
+                        "generate_greeting",
+                        "fallback",
+                        "finalize_response",
+                    }:
                         node_data = json.dumps({"node": name, "status": "started"})
                         yield f"event: node\ndata: {node_data}\n\n"
 
@@ -254,13 +268,22 @@ async def chat_stream(
                     elif kind == "on_chat_model_stream":
                         content = event["data"].get("chunk", {}).content
                         if content:
+                            was_streamed = True
                             yield f"event: content\ndata: {json.dumps({'chunk': content})}\n\n"
 
                     # Capture final state from completion events
                     if kind == "on_chain_end" and name == "LangGraph":
                         final_state = event["data"].get("output", {})
 
-                # 3. Terminal Metadata
+                # 3. Final Answer Body (for non-streaming nodes or fallback)
+                answer_obj = final_state.get("answer")
+                if not was_streamed and answer_obj:
+                    # Use getattr for type-safe access on the state object
+                    answer_content = getattr(answer_obj, "content", None)
+                    if answer_content:
+                        yield f"event: content\ndata: {json.dumps({'chunk': answer_content})}\n\n"
+
+                # 4. Terminal Metadata
                 metadata_payload = {
                     "citations": _get_citations_from_state(final_state),
                     "session_id": getattr(

@@ -8,6 +8,9 @@ from copilot_orchestrator.domain.ports.llm_provider import LLMProvider
 from copilot_orchestrator.orchestration.prompts.answer_generation import (
     ANSWER_GENERATION_SYSTEM_PROMPT,
 )
+from copilot_orchestrator.orchestration.prompts.greeting_generation import (
+    GREETING_SYSTEM_PROMPT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,4 +62,31 @@ class GenerationService:
         response = await self._provider.generate(messages)
 
         logger.info("Response generated successfully. Length: %d chars", len(response.content))
+        return response
+
+    async def generate_greeting(self, query: UserQuery, session: Session) -> AgentMessage:
+        """Generate a friendly greeting.
+
+        Args:
+            query: The user's greeting query.
+            session: The contemporary conversation session.
+
+        Returns:
+            An AgentMessage containing the generated greeting.
+        """
+        logger.debug("Generating greeting for query: %s", query.text)
+
+        messages = [
+            AgentMessage(role=MessageRole.SYSTEM, content=GREETING_SYSTEM_PROMPT),
+        ]
+
+        # Add history
+        max_history = 4
+        history = session.history[-max_history:] if session.history else []
+        messages.extend(history)
+
+        # Add latest user query
+        messages.append(AgentMessage(role=MessageRole.USER, content=query.text))
+
+        response = await self._provider.generate(messages)
         return response

@@ -23,7 +23,7 @@ class OrchestratorState(TypedDict):
     # Processed Query
     normalized_query: UserQuery
     detected_intent: IntentType | None
-    resolved_action: Action | None
+    resolved_actions: list[Action]
 
     # Context & Session
     session: Session
