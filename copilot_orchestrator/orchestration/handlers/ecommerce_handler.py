@@ -3,7 +3,7 @@ from typing import Any
 
 from copilot_orchestrator.domain.entities.action import Action
 from copilot_orchestrator.domain.enums.ecommerce_action_type import EcommerceActionType
-from copilot_orchestrator.infrastructure.ecommerce.mock_client import MockEcommerceClient
+from copilot_orchestrator.infrastructure.ecommerce.factory import EcommerceProviderFactory
 
 logger = logging.getLogger(__name__)
 
@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 class EcommerceActionHandler:
     """Handler for all E-commerce domain actions.
 
-    Delegates to MockEcommerceClient to simulate real tool execution.
+    Delegates to the configured EcommerceProvider to execute tools.
     """
 
     def __init__(self) -> None:
-        # In a production system, this client would be injected
-        self._client: MockEcommerceClient = MockEcommerceClient()
+        # Use the factory to pick between Mock, Shopify, etc.
+        self._client = EcommerceProviderFactory.get_provider()
 
     async def execute(self, action: Action) -> list[dict[str, Any]]:
         """Map EcommerceActionType to specific tool methods.
@@ -43,9 +43,9 @@ class EcommerceActionHandler:
                 results.append({"tool": "order_status", "output": status})
 
             elif action_type == EcommerceActionType.ADD_TO_CART:
-                pid = params.get("product_id", "")
+                vid = params.get("variant_id", "")
                 qty = params.get("quantity", 1)
-                cart_res = await self._client.add_to_cart(pid, qty)
+                cart_res = await self._client.add_to_cart(vid, qty)
                 results.append({"tool": "add_to_cart", "output": cart_res})
 
             elif action_type == EcommerceActionType.VIEW_CART:

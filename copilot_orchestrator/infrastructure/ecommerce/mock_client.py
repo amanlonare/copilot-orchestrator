@@ -1,10 +1,12 @@
 import logging
 from typing import Any
 
+from copilot_orchestrator.infrastructure.ecommerce.base import EcommerceProvider
+
 logger = logging.getLogger(__name__)
 
 
-class MockEcommerceClient:
+class MockEcommerceClient(EcommerceProvider):
     """Mock implementation of an e-commerce backend for local development and testing.
 
     Provides simulated endpoints for product discovery, order tracking, and
@@ -12,16 +14,8 @@ class MockEcommerceClient:
     """
 
     async def search_products(self, query: str) -> list[dict[str, Any]]:
-        """Simulates searching for products in a catalog.
-
-        Args:
-            query: The search term (e.g., 'jacket').
-
-        Returns:
-            A list of product dictionaries matching the query.
-        """
+        """Simulates searching for products in a catalog."""
         logger.info(f"[MOCK] Searching products for: {query}")
-        # Static mock results
         items: list[dict[str, Any]] = [
             {"id": "p_001", "name": "Classic Denim Jacket", "price": 89.99, "stock": 15},
             {"id": "p_002", "name": "Slim-fit Chinos", "price": 54.50, "stock": 22},
@@ -30,14 +24,7 @@ class MockEcommerceClient:
         return [it for it in items if query.lower() in str(it["name"]).lower()] or [items[0]]
 
     async def get_order_status(self, order_id: str) -> dict[str, Any]:
-        """Simulates looking up status for a specific order.
-
-        Args:
-            order_id: The unique identifier for the order (e.g., 'AB123').
-
-        Returns:
-            A dictionary containing delivery status and estimated dates.
-        """
+        """Simulates looking up status for a specific order."""
         logger.info(f"[MOCK] Fetching status for order: {order_id}")
         return {
             "order_id": order_id,
@@ -46,33 +33,17 @@ class MockEcommerceClient:
             "items": ["p_001"],
         }
 
-    async def add_to_cart(self, product_id: str, quantity: int) -> dict[str, Any]:
-        """Simulates adding a product to the user's shopping basket.
-
-        Args:
-            product_id: Target product ID.
-            quantity: Number of items to add.
-
-        Returns:
-            A status dictionary indicating success and the new total.
-        """
-        logger.info(f"[MOCK] Adding {quantity} of {product_id} to cart.")
+    async def add_to_cart(self, variant_id: str, quantity: int) -> dict[str, Any]:
+        """Simulates adding a product to the user's shopping basket."""
+        logger.info(f"[MOCK] Adding {quantity} of {variant_id} to cart.")
         return {
             "success": True,
-            "message": f"Successfully added {quantity} of {product_id} to your basket.",
+            "message": f"Successfully added {quantity} of {variant_id} to your basket.",
             "cart_total": 89.99 * quantity,
         }
 
     async def initiate_refund(self, order_id: str, reason: str) -> dict[str, Any]:
-        """Simulates initiating a refund for an order.
-
-        Args:
-            order_id: Target order ID.
-            reason: Reason for refund request.
-
-        Returns:
-            A status dictionary indicating the refund request was received.
-        """
+        """Simulates initiating a refund for an order."""
         logger.info(f"[MOCK] Initiating refund for order {order_id}. Reason: {reason}")
         return {
             "success": True,

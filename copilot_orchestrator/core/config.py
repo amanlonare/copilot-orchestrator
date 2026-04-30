@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # Project Info
     PROJECT_NAME: str = "copilot-orchestrator"
-    VERSION: str = "0.0.0"
+    VERSION: str = "0.9.0"
     ENVIRONMENT: str = "development"
     ACTIVE_DOMAIN: str = "ecommerce"
 
@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     RETRIEVER_TYPE: str = "mock"
     MCP_SERVER_COMMAND: str | None = None
     RAG_RELEVANCE_THRESHOLD: float = 0.1
+
+    # E-commerce
+    ECOMMERCE_PROVIDER: str = "mock"
+    SHOPIFY_SHOP_URL: str | None = None
+    SHOPIFY_ADMIN_ACCESS_TOKEN: SecretStr | None = None
 
 
 settings = Settings()

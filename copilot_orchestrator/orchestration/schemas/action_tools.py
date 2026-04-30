@@ -41,7 +41,13 @@ class AddToCart(EcommerceTool):
     """Add a specific product to the user's shopping cart."""
 
     model_config = ConfigDict(title="add_to_cart")
-    product_id: str = Field(description="The unique ID of the product to add.")
+    variant_id: str = Field(
+        ...,
+        description=(
+            "The unique Shopify Variant ID to add. If the product has options (size, color), "
+            "you MUST ask the user to choose before adding."
+        ),
+    )
     quantity: int = Field(1, description="Number of units to add (default is 1).")
 
 

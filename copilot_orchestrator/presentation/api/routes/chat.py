@@ -11,6 +11,7 @@ from opentelemetry import trace
 
 from copilot_orchestrator.domain.entities.query import OrchestratorRequest, UserQuery
 from copilot_orchestrator.domain.entities.session import Session
+from copilot_orchestrator.orchestration.utils.action_mapper import ActionMapper
 from copilot_orchestrator.presentation.api.dependencies import get_orchestrator_graph, get_services
 from copilot_orchestrator.presentation.api.schemas.request import ChatRequest
 from copilot_orchestrator.presentation.api.schemas.response import ChatResponse, CitationModel
@@ -228,57 +229,24 @@ async def chat_stream(
                 "langfuse_user_id": request.user_id or "anonymous",
             },
         }
-        # Track streaming state
-        was_streamed = False
-        final_state = initial_state
 
-        # Use standard context manager to ensure Langfuse trace consistency for streaming
+        # Context for the stream
+        context = {"was_streamed": False, "final_state": initial_state}
+
         with _trace_context(
             session_id=request.session_id or "default-stream",
             user_id=request.user_id or "anonymous",
             query=f"(Stream) {request.query}",
         ):
             try:
-                # Use astream_events (v2) for multiplexing
                 async for event in graph.astream_events(initial_state, config=config, version="v2"):
-                    kind = event["event"]
-                    name = event["name"]
-
-                    # 1. Node Progress
-                    if kind == "on_chain_start" and name == "LangGraph":
-                        yield f"event: node\ndata: {json.dumps({'node': 'start'})}\n\n"
-
-                    # Map chain/node starts to progress events
-                    elif kind in ("on_node_start", "on_chain_start") and name in {
-                        "intake",
-                        "detect_intent",
-                        "retrieve_context",
-                        "resolve_action",
-                        "execute_tools",
-                        "generate_answer",
-                        "format_action_response",
-                        "generate_greeting",
-                        "fallback",
-                        "finalize_response",
-                    }:
-                        node_data = json.dumps({"node": name, "status": "started"})
-                        yield f"event: node\ndata: {node_data}\n\n"
-
-                    # 2. Token Content (from generate_answer or format_action_response)
-                    elif kind == "on_chat_model_stream":
-                        content = event["data"].get("chunk", {}).content
-                        if content:
-                            was_streamed = True
-                            yield f"event: content\ndata: {json.dumps({'chunk': content})}\n\n"
-
-                    # Capture final state from completion events
-                    if kind == "on_chain_end" and name == "LangGraph":
-                        final_state = event["data"].get("output", {})
+                    async for sse_chunk in _handle_stream_event(event, context):
+                        yield sse_chunk
 
                 # 3. Final Answer Body (for non-streaming nodes or fallback)
+                final_state: dict[str, Any] = context["final_state"]  # type: ignore
                 answer_obj = final_state.get("answer")
-                if not was_streamed and answer_obj:
-                    # Use getattr for type-safe access on the state object
+                if not context["was_streamed"] and answer_obj:
                     answer_content = getattr(answer_obj, "content", None)
                     if answer_content:
                         yield f"event: content\ndata: {json.dumps({'chunk': answer_content})}\n\n"
@@ -301,3 +269,52 @@ async def chat_stream(
                 yield f"event: error\ndata: {json.dumps({'detail': str(e)})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+async def _handle_stream_event(
+    event: dict[str, Any], context: dict[str, Any]
+) -> AsyncIterator[str]:
+    """Internal router for LangGraph streaming events."""
+    kind = event["event"]
+    name = event["name"]
+
+    # 1. Node Progress
+    if kind == "on_chain_start" and name == "LangGraph":
+        yield f"event: node\ndata: {json.dumps({'node': 'start'})}\n\n"
+
+    elif kind in ("on_node_start", "on_chain_start") and name in {
+        "intake",
+        "detect_intent",
+        "retrieve_context",
+        "resolve_action",
+        "execute_tools",
+        "generate_answer",
+        "format_action_response",
+        "generate_greeting",
+        "fallback",
+        "finalize_response",
+    }:
+        node_data = json.dumps({"node": name, "status": "started"})
+        yield f"event: node\ndata: {node_data}\n\n"
+
+    # 2. Token Content
+    elif kind == "on_chat_model_stream":
+        content = event["data"].get("chunk", {}).content
+        if content:
+            context["was_streamed"] = True
+            yield f"event: content\ndata: {json.dumps({'chunk': content})}\n\n"
+
+    # 3. Commerce Actions
+    elif kind == "on_node_end" and name == "execute_tools":
+        output = event["data"].get("output", {})
+        tool_results = output.get("tool_results", [])
+        for res in tool_results:
+            tool_name = res.get("tool")
+            tool_output = res.get("output")
+            action = ActionMapper.map_tool_result_to_action(tool_name, tool_output)
+            if action:
+                yield f"event: action\ndata: {json.dumps(action)}\n\n"
+
+    # Capture final state
+    if kind == "on_chain_end" and name == "LangGraph":
+        context["final_state"] = event["data"].get("output", {})
