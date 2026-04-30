@@ -75,3 +75,6 @@ tmp/
 .agent/
 .agents/
 .planning/
+
+# docs
+docs/
